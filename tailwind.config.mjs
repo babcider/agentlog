@@ -9,7 +9,12 @@ export default {
         sans: ['Inter', 'sans-serif'],
       },
       colors: {
-        text: '#333',
+        heading: '#222',
+        body: '#333',
+        meta: '#888',
+      },
+      maxWidth: {
+        content: '680px',
       },
       typography: {
         DEFAULT: {
