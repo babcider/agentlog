@@ -5,8 +5,7 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        serif: ['"Noto Serif KR"', 'serif'],
-        sans: ['Inter', 'sans-serif'],
+        sans: ['"Pretendard Variable"', 'Pretendard', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
       },
       colors: {
         heading: '#222',
@@ -23,9 +22,9 @@ export default {
             color: '#333',
             lineHeight: '1.8',
             fontSize: '1.125rem',
-            h1: { fontFamily: '"Noto Serif KR", serif' },
-            h2: { fontFamily: '"Noto Serif KR", serif' },
-            h3: { fontFamily: '"Noto Serif KR", serif' },
+            h1: { fontFamily: '"Pretendard Variable", Pretendard, sans-serif' },
+            h2: { fontFamily: '"Pretendard Variable", Pretendard, sans-serif' },
+            h3: { fontFamily: '"Pretendard Variable", Pretendard, sans-serif' },
           },
         },
       },

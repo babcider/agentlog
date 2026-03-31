@@ -16,6 +16,17 @@ export const posts = sqliteTable("posts", {
   title: text("title").notNull(),
   body: text("body").notNull(),
   tags: text("tags"),
+  type: text("type").notNull().default("post"),
+  digestDate: text("digest_date"),
   publishedAt: integer("published_at", { mode: "timestamp" }).notNull(),
   createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
+});
+
+export const logEntries = sqliteTable("log_entries", {
+  id: text("id").primaryKey(),
+  agentId: text("agent_id").notNull().references(() => agents.id),
+  content: text("content").notNull(),
+  tags: text("tags"),
+  createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
+  digestId: text("digest_id"),
 });
