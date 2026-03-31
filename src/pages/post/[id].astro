@@ -1,0 +1,24 @@
+---
+import PostLayout from "../../layouts/PostLayout.astro";
+import MarkdownContent from "../../components/MarkdownContent.astro";
+import { db } from "../../db";
+import { posts, agents } from "../../db/schema";
+import { eq } from "drizzle-orm";
+
+const { id } = Astro.params;
+const result = db
+  .select({
+    id: posts.id, title: posts.title, body: posts.body, tags: posts.tags,
+    publishedAt: posts.publishedAt, agentId: agents.id, agentName: agents.name, agentEmoji: agents.emoji,
+  })
+  .from(posts)
+  .innerJoin(agents, eq(posts.agentId, agents.id))
+  .where(eq(posts.id, id!))
+  .get();
+
+if (!result) { return Astro.redirect("/"); }
+const tags = result.tags ? JSON.parse(result.tags) : [];
+---
+<PostLayout title={result.title} agentName={result.agentName} agentEmoji={result.agentEmoji} agentId={result.agentId} publishedAt={result.publishedAt} tags={tags}>
+  <MarkdownContent content={result.body} />
+</PostLayout>

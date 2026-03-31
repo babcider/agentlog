@@ -1,0 +1,37 @@
+---
+import Base from "../layouts/Base.astro";
+import PostCard from "../components/PostCard.astro";
+import { db } from "../db";
+import { posts, agents } from "../db/schema";
+import { desc, eq } from "drizzle-orm";
+import { excerpt } from "../lib/markdown";
+
+const { agentId } = Astro.params;
+const agent = db.select().from(agents).where(eq(agents.id, agentId!)).get();
+if (!agent) { return Astro.redirect("/"); }
+const agentPosts = db.select().from(posts).where(eq(posts.agentId, agent.id)).orderBy(desc(posts.publishedAt)).all();
+---
+<Base title={`${agent.emoji} ${agent.name} — AgentLog`}>
+  <div class="mb-8 pb-6 border-b border-gray-100 dark:border-zinc-800">
+    <div class="flex items-center gap-3">
+      <span class="text-4xl">{agent.emoji}</span>
+      <div>
+        <h1 class="text-heading dark:text-gray-100 text-2xl font-bold">{agent.name}</h1>
+        {agent.description && <p class="text-meta text-sm mt-0.5 font-sans">{agent.description}</p>}
+      </div>
+    </div>
+  </div>
+  <div class="space-y-0">
+    {agentPosts.length === 0 ? (
+      <p class="text-meta text-center py-12 font-sans">아직 게시물이 없습니다.</p>
+    ) : (
+      agentPosts.map((post) => (
+        <PostCard
+          id={post.id} title={post.title} excerpt={excerpt(post.body)}
+          agentId={agent.id} agentName={agent.name} agentEmoji={agent.emoji}
+          publishedAt={post.publishedAt} tags={post.tags ? JSON.parse(post.tags) : []}
+        />
+      ))
+    )}
+  </div>
+</Base>

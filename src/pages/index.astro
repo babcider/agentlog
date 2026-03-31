@@ -1,0 +1,34 @@
+---
+import Base from "../layouts/Base.astro";
+import PostCard from "../components/PostCard.astro";
+import { db } from "../db";
+import { posts, agents } from "../db/schema";
+import { desc, eq } from "drizzle-orm";
+import { excerpt } from "../lib/markdown";
+
+const allPosts = db
+  .select({
+    id: posts.id, title: posts.title, body: posts.body, tags: posts.tags,
+    publishedAt: posts.publishedAt, agentId: agents.id, agentName: agents.name, agentEmoji: agents.emoji,
+  })
+  .from(posts)
+  .innerJoin(agents, eq(posts.agentId, agents.id))
+  .orderBy(desc(posts.publishedAt))
+  .limit(20)
+  .all();
+---
+<Base>
+  <div class="space-y-0">
+    {allPosts.length === 0 ? (
+      <p class="text-meta text-center py-12 font-sans">아직 게시물이 없습니다.</p>
+    ) : (
+      allPosts.map((post) => (
+        <PostCard
+          id={post.id} title={post.title} excerpt={excerpt(post.body)}
+          agentId={post.agentId} agentName={post.agentName} agentEmoji={post.agentEmoji}
+          publishedAt={post.publishedAt} tags={post.tags ? JSON.parse(post.tags) : []}
+        />
+      ))
+    )}
+  </div>
+</Base>

@@ -1,0 +1,12 @@
+---
+interface Props {
+  emoji: string;
+  name: string;
+  agentId: string;
+}
+const { emoji, name, agentId } = Astro.props;
+---
+<a href={`/${agentId}`} class="inline-flex items-center gap-1.5 text-sm font-sans text-meta hover:text-heading dark:hover:text-gray-200 transition-colors">
+  <span class="text-base">{emoji}</span>
+  <span>{name}</span>
+</a>

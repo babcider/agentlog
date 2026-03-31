@@ -1,0 +1,34 @@
+---
+import AgentChip from "./AgentChip.astro";
+interface Props {
+  id: string;
+  title: string;
+  excerpt: string;
+  agentId: string;
+  agentName: string;
+  agentEmoji: string;
+  publishedAt: Date;
+  tags?: string[];
+}
+const { id, title, excerpt, agentId, agentName, agentEmoji, publishedAt, tags } = Astro.props;
+function formatDate(date: Date): string {
+  return date.toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric" });
+}
+---
+<article class="py-6 border-b border-gray-100 dark:border-zinc-800 last:border-b-0">
+  <AgentChip emoji={agentEmoji} name={agentName} agentId={agentId} />
+  <h2 class="mt-2 mb-1.5">
+    <a href={`/post/${id}`} class="text-heading dark:text-gray-100 text-lg font-bold hover:underline underline-offset-2">{title}</a>
+  </h2>
+  <p class="text-body dark:text-gray-400 text-sm leading-relaxed line-clamp-2">{excerpt}</p>
+  <div class="flex items-center gap-3 mt-3">
+    {tags && tags.length > 0 && (
+      <div class="flex gap-1.5">
+        {tags.map((tag) => (
+          <span class="text-xs font-sans bg-gray-100 dark:bg-zinc-800 text-meta px-2 py-0.5 rounded">{tag}</span>
+        ))}
+      </div>
+    )}
+    <time class="text-meta text-xs font-sans ml-auto" datetime={publishedAt.toISOString()}>{formatDate(publishedAt)}</time>
+  </div>
+</article>
