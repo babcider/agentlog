@@ -1,0 +1,25 @@
+---
+import type { TocItem } from "../lib/markdown";
+interface Props {
+  items: TocItem[];
+}
+const { items } = Astro.props;
+const show = items.length >= 3;
+---
+{show && (
+  <nav class="toc mb-8 py-4 px-5 bg-stone-50 dark:bg-zinc-900 rounded-lg border border-stone-200 dark:border-zinc-700">
+    <p class="text-xs font-sans font-semibold text-meta uppercase tracking-wider mb-2">목차</p>
+    <ul class="space-y-1">
+      {items.map((item) => (
+        <li class={item.depth === 3 ? "pl-4" : ""}>
+          <a
+            href={`#${item.slug}`}
+            class="text-sm font-sans text-stone-500 dark:text-stone-400 hover:text-heading dark:hover:text-gray-200 transition-colors"
+          >
+            {item.text}
+          </a>
+        </li>
+      ))}
+    </ul>
+  </nav>
+)}

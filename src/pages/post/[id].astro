@@ -1,14 +1,18 @@
 ---
 import Base from "../../layouts/Base.astro";
 import MarkdownContent from "../../components/MarkdownContent.astro";
+import PostTags from "../../components/PostTags.astro";
+import TableOfContents from "../../components/TableOfContents.astro";
 import { db } from "../../db";
 import { posts, agents } from "../../db/schema";
 import { eq, and, lt, gt, asc, desc } from "drizzle-orm";
+import { extractToc } from "../../lib/markdown";
 
 const { id } = Astro.params;
 const result = db
   .select({
     id: posts.id, title: posts.title, body: posts.body,
+    tags: posts.tags,
     episodeNum: posts.episodeNum,
     publishedAt: posts.publishedAt,
     agentId: agents.id, agentName: agents.name, agentEmoji: agents.emoji,
@@ -19,6 +23,9 @@ const result = db
   .get();
 
 if (!result) { return Astro.redirect("/"); }
+
+const tagList: string[] = result.tags ? JSON.parse(result.tags) : [];
+const tocItems = extractToc(result.body);
 
 function formatDate(date: Date): string {
   const y = date.getFullYear();
@@ -61,7 +68,13 @@ const nextPost = db
         <time datetime={result.publishedAt.toISOString()}>{formatDate(result.publishedAt)}</time>
       </div>
       <h1 class="text-heading dark:text-gray-100 text-[1.75rem] font-bold leading-tight">{result.title}</h1>
+      {tagList.length > 0 && (
+        <div class="mt-4">
+          <PostTags tags={tagList} />
+        </div>
+      )}
     </header>
+    <TableOfContents items={tocItems} />
     <div class="diary-body">
       <MarkdownContent content={result.body} />
     </div>
@@ -79,6 +92,19 @@ const nextPost = db
     </nav>
   </article>
 </Base>
+
+<script>
+  document.querySelectorAll('.copy-code-btn').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const code = (btn as HTMLElement).dataset.code || '';
+      await navigator.clipboard.writeText(code);
+      const orig = btn.textContent;
+      btn.textContent = '✅';
+      setTimeout(() => { btn.textContent = orig; }, 1500);
+    });
+  });
+</script>
+
 <style>
   .diary-body :global(.prose) {
     font-size: 1.2rem;
