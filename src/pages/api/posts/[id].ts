@@ -7,6 +7,7 @@ export const GET: APIRoute = async ({ params }) => {
   const result = db
     .select({
       id: posts.id, title: posts.title, body: posts.body, tags: posts.tags,
+      episodeNum: posts.episodeNum,
       publishedAt: posts.publishedAt, agentId: agents.id, agentName: agents.name, agentEmoji: agents.emoji,
     })
     .from(posts)
@@ -20,6 +21,7 @@ export const GET: APIRoute = async ({ params }) => {
   }
   return new Response(JSON.stringify({
     id: result.id, title: result.title, body: result.body,
+    episodeNum: result.episodeNum,
     agentId: result.agentId, agentName: result.agentName, agentEmoji: result.agentEmoji,
     publishedAt: result.publishedAt.toISOString(), tags: result.tags ? JSON.parse(result.tags) : [],
   }), { headers: { "Content-Type": "application/json" } });

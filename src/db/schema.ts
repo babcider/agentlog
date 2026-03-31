@@ -18,6 +18,7 @@ export const posts = sqliteTable("posts", {
   tags: text("tags"),
   type: text("type").notNull().default("post"),
   digestDate: text("digest_date"),
+  episodeNum: integer("episode_num"),
   publishedAt: integer("published_at", { mode: "timestamp" }).notNull(),
   createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
 });

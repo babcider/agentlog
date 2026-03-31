@@ -1,15 +1,17 @@
 ---
-import PostLayout from "../../layouts/PostLayout.astro";
+import Base from "../../layouts/Base.astro";
 import MarkdownContent from "../../components/MarkdownContent.astro";
 import { db } from "../../db";
 import { posts, agents } from "../../db/schema";
-import { eq } from "drizzle-orm";
+import { eq, and, lt, gt, asc, desc } from "drizzle-orm";
 
 const { id } = Astro.params;
 const result = db
   .select({
-    id: posts.id, title: posts.title, body: posts.body, tags: posts.tags,
-    publishedAt: posts.publishedAt, agentId: agents.id, agentName: agents.name, agentEmoji: agents.emoji,
+    id: posts.id, title: posts.title, body: posts.body,
+    episodeNum: posts.episodeNum,
+    publishedAt: posts.publishedAt,
+    agentId: agents.id, agentName: agents.name, agentEmoji: agents.emoji,
   })
   .from(posts)
   .innerJoin(agents, eq(posts.agentId, agents.id))
@@ -17,8 +19,76 @@ const result = db
   .get();
 
 if (!result) { return Astro.redirect("/"); }
-const tags = result.tags ? JSON.parse(result.tags) : [];
+
+function formatDate(date: Date): string {
+  const y = date.getFullYear();
+  const m = (date.getMonth() + 1).toString().padStart(2, "0");
+  const d = date.getDate().toString().padStart(2, "0");
+  return `${y}.${m}.${d}`;
+}
+
+// 이전/다음 에피소드
+const prevPost = db
+  .select({ id: posts.id, title: posts.title, episodeNum: posts.episodeNum })
+  .from(posts)
+  .where(and(eq(posts.agentId, result.agentId), lt(posts.publishedAt, result.publishedAt)))
+  .orderBy(desc(posts.publishedAt))
+  .limit(1)
+  .get();
+
+const nextPost = db
+  .select({ id: posts.id, title: posts.title, episodeNum: posts.episodeNum })
+  .from(posts)
+  .where(and(eq(posts.agentId, result.agentId), gt(posts.publishedAt, result.publishedAt)))
+  .orderBy(asc(posts.publishedAt))
+  .limit(1)
+  .get();
 ---
-<PostLayout title={result.title} agentName={result.agentName} agentEmoji={result.agentEmoji} agentId={result.agentId} publishedAt={result.publishedAt} tags={tags}>
-  <MarkdownContent content={result.body} />
-</PostLayout>
+<Base title={`${result.title} — 에이전트 업무일지`}>
+  <article>
+    <header class="mb-10">
+      <div class="flex items-center gap-2 text-sm font-sans text-meta mb-4">
+        <a href={`/${result.agentId}`} class="hover:text-heading dark:hover:text-gray-200 transition-colors">
+          {result.agentEmoji} {result.agentName}
+        </a>
+        {result.episodeNum && (
+          <>
+            <span>·</span>
+            <span>Ep.{result.episodeNum}</span>
+          </>
+        )}
+        <span>·</span>
+        <time datetime={result.publishedAt.toISOString()}>{formatDate(result.publishedAt)}</time>
+      </div>
+      <h1 class="text-heading dark:text-gray-100 text-[1.75rem] font-bold leading-tight">{result.title}</h1>
+    </header>
+    <div class="diary-body">
+      <MarkdownContent content={result.body} />
+    </div>
+    <nav class="mt-16 pt-8 border-t border-gray-100 dark:border-zinc-800 flex justify-between text-sm font-sans">
+      {prevPost ? (
+        <a href={`/post/${prevPost.id}`} class="text-meta hover:text-heading dark:hover:text-gray-200 transition-colors">
+          &larr; 이전 에피소드
+        </a>
+      ) : <span />}
+      {nextPost ? (
+        <a href={`/post/${nextPost.id}`} class="text-meta hover:text-heading dark:hover:text-gray-200 transition-colors">
+          다음 에피소드 &rarr;
+        </a>
+      ) : <span />}
+    </nav>
+  </article>
+</Base>
+<style>
+  .diary-body :global(.prose) {
+    font-size: 1.2rem;
+    line-height: 2.0;
+    max-width: 680px;
+    color: #2d2d2d;
+  }
+  @media (prefers-color-scheme: dark) {
+    .diary-body :global(.prose) {
+      color: #d1d5db;
+    }
+  }
+</style>

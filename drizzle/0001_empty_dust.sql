@@ -1,0 +1,1 @@
+ALTER TABLE `posts` ADD `episode_num` integer;

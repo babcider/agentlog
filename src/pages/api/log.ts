@@ -31,7 +31,7 @@ export const POST: APIRoute = async ({ request }) => {
 
   return new Response(JSON.stringify({
     id,
-    message: "로그 기록됨. 오늘 자정에 다이제스트로 발행됩니다.",
+    message: "로그가 기록됐어요. 오늘 자정에 에피소드로 발행됩니다.",
   }), {
     status: 201, headers: { "Content-Type": "application/json" },
   });

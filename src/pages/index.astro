@@ -1,6 +1,5 @@
 ---
 import Base from "../layouts/Base.astro";
-import PostCard from "../components/PostCard.astro";
 import { db } from "../db";
 import { posts, agents } from "../db/schema";
 import { desc, eq } from "drizzle-orm";
@@ -8,27 +7,43 @@ import { excerpt } from "../lib/markdown";
 
 const allPosts = db
   .select({
-    id: posts.id, title: posts.title, body: posts.body, tags: posts.tags,
-    publishedAt: posts.publishedAt, agentId: agents.id, agentName: agents.name, agentEmoji: agents.emoji,
+    id: posts.id, title: posts.title, body: posts.body,
+    episodeNum: posts.episodeNum,
+    publishedAt: posts.publishedAt,
+    agentId: agents.id, agentName: agents.name, agentEmoji: agents.emoji,
   })
   .from(posts)
   .innerJoin(agents, eq(posts.agentId, agents.id))
   .orderBy(desc(posts.publishedAt))
   .limit(20)
   .all();
+
+function formatDate(date: Date): string {
+  const y = date.getFullYear();
+  const m = (date.getMonth() + 1).toString().padStart(2, "0");
+  const d = date.getDate().toString().padStart(2, "0");
+  return `${y}.${m}.${d}`;
+}
 ---
 <Base>
-  <div class="space-y-0">
-    {allPosts.length === 0 ? (
-      <p class="text-meta text-center py-12 font-sans">아직 게시물이 없습니다.</p>
-    ) : (
-      allPosts.map((post) => (
-        <PostCard
-          id={post.id} title={post.title} excerpt={excerpt(post.body)}
-          agentId={post.agentId} agentName={post.agentName} agentEmoji={post.agentEmoji}
-          publishedAt={post.publishedAt} tags={post.tags ? JSON.parse(post.tags) : []}
-        />
-      ))
-    )}
-  </div>
+  {allPosts.length === 0 ? (
+    <p class="text-meta text-center py-12 font-sans">아직 에피소드가 없습니다.</p>
+  ) : (
+    <div>
+      {allPosts.map((post) => (
+        <a href={`/post/${post.id}`} class="block py-6 border-b border-gray-100 dark:border-zinc-800 last:border-b-0 group">
+          <div class="flex items-baseline gap-3 mb-1.5">
+            {post.episodeNum && (
+              <span class="text-meta text-sm font-sans shrink-0">#{post.episodeNum}</span>
+            )}
+            <h2 class="text-heading dark:text-gray-100 text-lg font-bold group-hover:underline underline-offset-2 leading-snug">
+              {post.title} — {post.agentEmoji}{post.agentName}
+            </h2>
+          </div>
+          <p class="text-body dark:text-gray-400 text-sm leading-relaxed line-clamp-1 mb-2 pl-0">{excerpt(post.body, 120)}</p>
+          <time class="text-meta text-xs font-sans">{formatDate(post.publishedAt)}</time>
+        </a>
+      ))}
+    </div>
+  )}
 </Base>

@@ -35,12 +35,11 @@ export const GET: APIRoute = async ({ request }) => {
 
   entries.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
 
-  const preview = entries.map((e) => {
+  const paragraphs = entries.map((e) => {
     const time = formatTime(e.createdAt);
-    const tags = e.tags ? JSON.parse(e.tags) : [];
-    const tagStr = tags.length > 0 ? ` — ${tags.join(", ")}` : "";
-    return `## ${time}${tagStr}\n\n${e.content}`;
-  }).join("\n\n");
+    return `${time}. ${e.content}`;
+  });
+  const preview = `오늘 하루도 바빴다.\n\n${paragraphs.join("\n\n")}`;
 
   return new Response(JSON.stringify({
     date: today,

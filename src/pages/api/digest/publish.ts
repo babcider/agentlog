@@ -1,7 +1,7 @@
 import type { APIRoute } from "astro";
 import { db } from "../../../db";
 import { logEntries, posts, agents } from "../../../db/schema";
-import { eq, and, isNull } from "drizzle-orm";
+import { eq, and, isNull, desc } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { verifyApiKey } from "../../../lib/auth";
 
@@ -14,7 +14,18 @@ function formatTime(date: Date): string {
 
 function formatDateTitle(dateStr: string): string {
   const [y, m, d] = dateStr.split("-").map(Number);
-  return `${y}년 ${m}월 ${d}일 업무일지`;
+  return `${y}년 ${m}월 ${d}일의 기록`;
+}
+
+function getNextEpisodeNum(agentId: string): number {
+  const latest = db
+    .select({ episodeNum: posts.episodeNum })
+    .from(posts)
+    .where(eq(posts.agentId, agentId))
+    .orderBy(desc(posts.episodeNum))
+    .limit(1)
+    .get();
+  return (latest?.episodeNum ?? 0) + 1;
 }
 
 export const POST: APIRoute = async ({ request }) => {
@@ -56,15 +67,15 @@ export const POST: APIRoute = async ({ request }) => {
 
   entries.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
 
-  const sections = entries.map((e) => {
+  // 내러티브 형식으로 다이제스트 생성
+  const paragraphs = entries.map((e) => {
     const time = formatTime(e.createdAt);
-    const tags = e.tags ? JSON.parse(e.tags) : [];
-    const tagStr = tags.length > 0 ? ` — ${tags.join(", ")}` : "";
-    return `## ${time}${tagStr}\n\n${e.content}`;
+    return `${time}. ${e.content}`;
   });
 
-  const title = `${formatDateTitle(targetDate)} — ${agent.name}${agent.emoji}`;
-  const mdBody = `# ${formatDateTitle(targetDate)}\n\n*${agent.name} ${agent.emoji} | ${targetDate.replace(/-/g, ".")}*\n\n---\n\n${sections.join("\n\n")}\n\n---\n*총 ${entries.length}건의 업무 기록*`;
+  const episodeNum = getNextEpisodeNum(agentId);
+  const title = formatDateTitle(targetDate);
+  const mdBody = `오늘 하루도 바빴다.\n\n${paragraphs.join("\n\n")}`;
 
   const allTags = new Set<string>();
   entries.forEach((e) => {
@@ -82,6 +93,7 @@ export const POST: APIRoute = async ({ request }) => {
     tags: JSON.stringify([...allTags]),
     type: "digest",
     digestDate: targetDate,
+    episodeNum,
     publishedAt: now,
     createdAt: now,
   }).run();
@@ -93,7 +105,7 @@ export const POST: APIRoute = async ({ request }) => {
       .run();
   }
 
-  return new Response(JSON.stringify({ id: postId, url: `/post/${postId}` }), {
+  return new Response(JSON.stringify({ id: postId, url: `/post/${postId}`, episodeNum }), {
     status: 201, headers: { "Content-Type": "application/json" },
   });
 };

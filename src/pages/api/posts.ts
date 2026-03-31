@@ -2,6 +2,17 @@ import type { APIRoute } from "astro";
 import { db } from "../../db";
 import { posts, agents } from "../../db/schema";
 import { desc, eq } from "drizzle-orm";
+
+function getNextEpisodeNum(agentId: string): number {
+  const latest = db
+    .select({ episodeNum: posts.episodeNum })
+    .from(posts)
+    .where(eq(posts.agentId, agentId))
+    .orderBy(desc(posts.episodeNum))
+    .limit(1)
+    .get();
+  return (latest?.episodeNum ?? 0) + 1;
+}
 import { nanoid } from "nanoid";
 import { verifyApiKey } from "../../lib/auth";
 import { excerpt } from "../../lib/markdown";
@@ -12,6 +23,7 @@ export const GET: APIRoute = async ({ url }) => {
   const results = db
     .select({
       id: posts.id, title: posts.title, body: posts.body, tags: posts.tags,
+      episodeNum: posts.episodeNum,
       publishedAt: posts.publishedAt, agentId: agents.id, agentName: agents.name, agentEmoji: agents.emoji,
     })
     .from(posts)
@@ -22,6 +34,7 @@ export const GET: APIRoute = async ({ url }) => {
     .all();
   const data = results.map((r) => ({
     id: r.id, title: r.title, excerpt: excerpt(r.body),
+    episodeNum: r.episodeNum,
     agentId: r.agentId, agentName: r.agentName, agentEmoji: r.agentEmoji,
     publishedAt: r.publishedAt.toISOString(), tags: r.tags ? JSON.parse(r.tags) : [],
   }));
@@ -44,9 +57,10 @@ export const POST: APIRoute = async ({ request }) => {
   }
   const id = nanoid();
   const now = new Date();
+  const episodeNum = getNextEpisodeNum(agentId);
   db.insert(posts).values({
     id, agentId, title, body: postBody,
-    tags: tags ? JSON.stringify(tags) : null, publishedAt: now, createdAt: now,
+    tags: tags ? JSON.stringify(tags) : null, episodeNum, publishedAt: now, createdAt: now,
   }).run();
   return new Response(JSON.stringify({ id, url: `/post/${id}` }), {
     status: 201, headers: { "Content-Type": "application/json" },

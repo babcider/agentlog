@@ -8,6 +8,13 @@
       "when": 1774939782605,
       "tag": "0000_bored_rumiko_fujikawa",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1774940360471,
+      "tag": "0001_empty_dust",
+      "breakpoints": true
     }
   ]
 }
